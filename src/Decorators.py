@@ -4,6 +4,7 @@
 # so we use *args and **kwargs to allow any number of arguments
 # The 2 examples below are examples of decorator functions but we can also has decorator classes , see below
 import time
+from functools import wraps
 
 
 def decorator_func(original_function):
@@ -49,13 +50,17 @@ display_class()
 # this is a common use: logging
 # This is a great example of just adding a decorator to a function that logs the results
 # another example can be to use a timer decorator (again, see below)
-# You can also stack the decorators together
+# You can also stack the decorators together. However, if we didn't add the @wrap decorator
+# we would see weird results depending on the order we stacked the decoractor annotations.
+# If you unpack what the decorators are doing then you can see why the method in the log (for example)
+# logs a message saying the wrapper function instead of the function being called. So use @wrap to resolve this issue
 
 
 def my_logger(orig_func):
     import logging
     logging.basicConfig(filename='{}.log'.format(orig_func.__name__), level=logging.INFO)
 
+    @wraps(orig_func)
     def wrapper(*args, **kwargs):
         logging.info(
             'Ran with arges: {}, and kwargs: {}'.format(args, kwargs))
@@ -67,6 +72,7 @@ def my_logger(orig_func):
 def my_timer(orig_func):
     import time
 
+    @wraps(orig_func)
     def wrapper(*args, **kwargs):
         t1 = time.time()
         result = orig_func(*args, **kwargs)
@@ -77,6 +83,7 @@ def my_timer(orig_func):
 
 
 @my_logger
+@my_timer
 def display_emp_info(user_id, email):
     print('display_emp_info ran with arguments ({}, {})'.format(user_id, email))
 
@@ -84,6 +91,7 @@ display_emp_info('daviesr5', 'rob@mail.com')
 
 
 @my_timer
+@my_logger
 def display_dev_info(userid, email, language):
     time.sleep(1)
     print('display_dev_info ran with arguments ({}, {})'.format(userid, email, language))
